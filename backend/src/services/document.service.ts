@@ -3,7 +3,15 @@
  * Handles document parsing (PDF, DOCX) and DOCX generation.
  * Implements "Sticky Section" logic for auto-detecting section headers.
  */
-import * as pdfjs from "pdfjs-dist";
+// Dynamic import for pdfjs-dist legacy build (ESM only in v5.x)
+// Required for Node.js environments (no DOMMatrix)
+let pdfjs: typeof import("pdfjs-dist");
+const loadPdfjs = async () => {
+    if (!pdfjs) {
+        pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+    }
+    return pdfjs;
+};
 import mammoth from "mammoth";
 import {
     Document,
@@ -120,8 +128,9 @@ function parseHtmlQuestionBlock(htmlBlock: string, section: string): SmartQuesti
 }
 
 async function parseWithPdfjsStickySection(buffer: Buffer): Promise<SmartQuestion[]> {
+    const pdfjsLib = await loadPdfjs();
     const uint8Array = new Uint8Array(buffer);
-    const doc = await pdfjs.getDocument({ data: uint8Array }).promise;
+    const doc = await pdfjsLib.getDocument({ data: uint8Array }).promise;
     let fullText = "";
 
     // Bước 1: Trích xuất toàn bộ text
