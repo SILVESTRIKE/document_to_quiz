@@ -3,7 +3,7 @@
  * Handles document parsing (PDF, DOCX) and DOCX generation.
  * Implements "Sticky Section" logic for auto-detecting section headers.
  */
-import * as pdfjs from "pdfjs-dist/legacy/build/pdf";
+import * as pdfjs from "pdfjs-dist";
 import mammoth from "mammoth";
 import {
     Document,
