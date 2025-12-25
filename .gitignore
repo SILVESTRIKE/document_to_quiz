@@ -1,0 +1,93 @@
+# ===========================
+# Dependencies
+# ===========================
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+uploads/
+# ===========================
+# Environment & Secrets
+# ===========================
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+credentials.json
+service-account*.json
+
+# ===========================
+# Build & Output
+# ===========================
+dist/
+build/
+*.js.map
+*.d.ts
+
+# ===========================
+# Uploads & User Data
+# ===========================
+uploads/
+uploads/temp/
+uploads/documents/
+*.docx
+*.pdf
+
+# ===========================
+# Logs
+# ===========================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ===========================
+# IDE & Editor
+# ===========================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ===========================
+# Testing & Coverage
+# ===========================
+coverage/
+.nyc_output/
+*.lcov
+
+# ===========================
+# Debug & Temp Files
+# ===========================
+debug_*.json
+*.tmp
+*.temp
+*.cache
+
+# ===========================
+# OS Generated
+# ===========================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ===========================
+# TypeScript
+# ===========================
+*.tsbuildinfo
+
+# ===========================
+# Redis & DB dumps
+# ===========================
+dump.rdb
+*.rdb

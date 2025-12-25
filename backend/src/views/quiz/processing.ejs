@@ -1,0 +1,207 @@
+<div class="min-h-screen bg-gray-50 py-12">
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-white rounded-2xl shadow-lg p-8 text-center">
+            <!-- Status Icon -->
+            <div id="statusIcon"
+                class="w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-6 bg-purple-100">
+                <svg class="w-12 h-12 text-purple-600 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                    </path>
+                </svg>
+            </div>
+
+            <!-- Status Title -->
+            <h1 class="text-2xl font-bold text-gray-900" id="statusTitle">Đang xử lý...</h1>
+            <p class="text-gray-600 mt-2" id="statusMessage">Hệ thống đang phân tích tài liệu của bạn</p>
+
+            <!-- Progress Bar -->
+            <div class="mt-8">
+                <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div id="progressBar"
+                        class="h-full bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full transition-all duration-500"
+                        style="width: 0%"></div>
+                </div>
+                <p class="text-sm text-gray-500 mt-2" id="progressText">0%</p>
+            </div>
+
+            <!-- Status Details -->
+            <div id="statusDetails" class="mt-8 p-4 bg-gray-50 rounded-lg text-left">
+                <h3 class="font-medium text-gray-900 mb-3">Tiến trình xử lý:</h3>
+                <ul class="space-y-2" id="stepsList">
+                    <li class="flex items-center text-gray-600">
+                        <span class="w-5 h-5 mr-3 flex items-center justify-center">
+                            <svg class="w-4 h-4 text-gray-400 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                    stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
+                        </span>
+                        Đọc tài liệu...
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Action Buttons (hidden initially) -->
+            <div id="actionButtons" class="mt-8 space-y-3 hidden">
+                <a href="#" id="viewQuizBtn"
+                    class="block w-full py-3 px-4 btn-gradient text-white font-medium rounded-lg transition-all">
+                    Xem Quiz
+                </a>
+                <a href="/dashboard"
+                    class="block w-full py-3 px-4 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-all">
+                    Quay lại Dashboard
+                </a>
+            </div>
+
+            <!-- Error Retry Button (hidden initially) -->
+            <div id="retryButton" class="mt-8 hidden">
+                <a href="/upload"
+                    class="inline-flex items-center px-6 py-3 btn-gradient text-white font-medium rounded-lg">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                        </path>
+                    </svg>
+                    Thử lại
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const quizId = window.location.pathname.split('/')[2];
+    let pollInterval;
+
+    const steps = [
+        { key: 'reading', label: 'Đọc tài liệu' },
+        { key: 'parsing', label: 'Phân tích cấu trúc' },
+        { key: 'detecting', label: 'Nhận diện câu hỏi và đáp án' },
+        { key: 'ai_processing', label: 'Xử lý bằng AI' },
+        { key: 'saving', label: 'Lưu kết quả' }
+    ];
+
+    async function checkStatus() {
+        if (!window.authManager || !window.authManager.getAccessToken()) {
+            window.location.href = '/login';
+            return;
+        }
+
+        try {
+            const response = await window.authManager.fetchWithAuth(`/api/v1/quizzes/${quizId}/status`);
+
+            if (response.status === 401) {
+                window.authManager.clearTokens();
+                window.location.href = '/login';
+                return;
+            }
+
+            const data = await response.json();
+
+            updateUI(data);
+
+            if (data.status === 'completed' || data.status === 'failed') {
+                clearInterval(pollInterval);
+            }
+
+        } catch (error) {
+            console.error('Error checking status:', error);
+        }
+    }
+
+    function updateUI(data) {
+        const statusIcon = document.getElementById('statusIcon');
+        const statusTitle = document.getElementById('statusTitle');
+        const statusMessage = document.getElementById('statusMessage');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+
+        switch (data.status) {
+            case 'completed':
+                statusIcon.innerHTML = `
+                    <svg class="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                `;
+                statusIcon.className = 'w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-6 bg-green-100';
+                statusTitle.textContent = 'Hoàn thành!';
+                statusMessage.textContent = `Quiz đã sẵn sàng với ${data.questionCount || 0} câu hỏi`;
+                progressBar.style.width = '100%';
+                progressText.textContent = '100%';
+
+                document.getElementById('viewQuizBtn').href = `/quiz/${quizId}`;
+                document.getElementById('actionButtons').classList.remove('hidden');
+                document.getElementById('statusDetails').classList.add('hidden');
+                break;
+
+            case 'failed':
+                statusIcon.innerHTML = `
+                    <svg class="w-12 h-12 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                `;
+                statusIcon.className = 'w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-6 bg-red-100';
+                statusTitle.textContent = 'Xử lý thất bại';
+                statusMessage.textContent = data.error || 'Đã xảy ra lỗi trong quá trình xử lý';
+
+                document.getElementById('retryButton').classList.remove('hidden');
+                document.getElementById('statusDetails').classList.add('hidden');
+                break;
+
+            case 'processing':
+            case 'pending':
+            default:
+                const progress = data.progress || 0;
+                progressBar.style.width = `${progress}%`;
+                progressText.textContent = `${progress}%`;
+
+                // Update steps
+                updateSteps(data.currentStep || 'reading');
+                break;
+        }
+    }
+
+    function updateSteps(currentStep) {
+        const stepsList = document.getElementById('stepsList');
+        const currentIndex = steps.findIndex(s => s.key === currentStep);
+
+        stepsList.innerHTML = steps.map((step, index) => {
+            let icon, textClass;
+
+            if (index < currentIndex) {
+                // Completed
+                icon = `<svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>`;
+                textClass = 'text-green-600';
+            } else if (index === currentIndex) {
+                // Current
+                icon = `<svg class="w-4 h-4 text-purple-600 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>`;
+                textClass = 'text-purple-600 font-medium';
+            } else {
+                // Pending
+                icon = `<div class="w-4 h-4 border-2 border-gray-300 rounded-full"></div>`;
+                textClass = 'text-gray-400';
+            }
+
+            return `
+                <li class="flex items-center ${textClass}">
+                    <span class="w-5 h-5 mr-3 flex items-center justify-center">${icon}</span>
+                    ${step.label}
+                </li>
+            `;
+        }).join('');
+    }
+
+    // Initial check
+    checkStatus();
+
+    // Poll every 2 seconds
+    pollInterval = setInterval(checkStatus, 2000);
+</script>

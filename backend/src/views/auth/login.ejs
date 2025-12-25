@@ -1,0 +1,142 @@
+<div class="min-h-[80vh] flex items-center justify-center gradient-bg py-12">
+    <div class="max-w-md w-full mx-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-8">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <div
+                    class="w-16 h-16 mx-auto bg-gradient-to-r from-purple-500 to-indigo-500 rounded-2xl flex items-center justify-center mb-4">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1">
+                        </path>
+                    </svg>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-900">Đăng nhập</h1>
+                <p class="text-gray-600 mt-2">Chào mừng bạn trở lại!</p>
+            </div>
+
+            <!-- Error Message -->
+            <% if (typeof error !=='undefined' && error) { %>
+                <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <%= error %>
+                </div>
+                <% } %>
+
+                    <!-- Login Form -->
+                    <form id="loginForm" class="space-y-6">
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email hoặc Tên đăng
+                                nhập</label>
+                            <input type="text" id="email" name="email" required
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                                placeholder="email hoặc username">
+                        </div>
+
+                        <div>
+                            <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Mật khẩu</label>
+                            <div class="relative">
+                                <input type="password" id="password" name="password" required
+                                    class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                                    placeholder="••••••••">
+                                <button type="button" id="togglePassword"
+                                    class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
+                                        </path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <label class="flex items-center">
+                                <input type="checkbox"
+                                    class="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500">
+                                <span class="ml-2 text-sm text-gray-600">Ghi nhớ đăng nhập</span>
+                            </label>
+                            <a href="#" class="text-sm text-purple-600 hover:text-purple-700">Quên mật khẩu?</a>
+                        </div>
+
+                        <button type="submit" id="submitBtn"
+                            class="w-full py-3 px-4 btn-gradient text-white font-medium rounded-lg transition-all flex items-center justify-center">
+                            <span id="btnText">Đăng nhập</span>
+                            <svg id="btnSpinner" class="hidden w-5 h-5 ml-2 animate-spin" fill="none"
+                                viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                    stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                </path>
+                            </svg>
+                        </button>
+                    </form>
+
+                    <!-- Register Link -->
+                    <div class="mt-8 text-center">
+                        <p class="text-gray-600">
+                            Chưa có tài khoản?
+                            <a href="/register" class="text-purple-600 hover:text-purple-700 font-medium">Đăng ký
+                                ngay</a>
+                        </p>
+                    </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Toggle password visibility
+    document.getElementById('togglePassword').addEventListener('click', function () {
+        const password = document.getElementById('password');
+        password.type = password.type === 'password' ? 'text' : 'password';
+    });
+
+    // Form submission
+    document.getElementById('loginForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const btn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+        const btnSpinner = document.getElementById('btnSpinner');
+
+        btn.disabled = true;
+        btnText.textContent = 'Đang đăng nhập...';
+        btnSpinner.classList.remove('hidden');
+
+        try {
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include', // CRITICAL: allows browser to save HttpOnly cookies
+                body: JSON.stringify({
+                    email: document.getElementById('email').value,
+                    password: document.getElementById('password').value
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Use authManager for secure in-memory token storage
+                if (window.authManager) {
+                    window.authManager.setTokens(data.tokens.accessToken);
+                }
+                window.location.href = '/dashboard';
+            } else {
+                alert(data.error || 'Đăng nhập thất bại');
+            }
+        } catch (error) {
+            alert('Có lỗi xảy ra. Vui lòng thử lại.');
+        } finally {
+            btn.disabled = false;
+            btnText.textContent = 'Đăng nhập';
+            btnSpinner.classList.add('hidden');
+        }
+    });
+</script>

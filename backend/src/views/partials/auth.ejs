@@ -1,0 +1,150 @@
+<script>
+    /**
+     * Auth Utility - Silent Refresh & Token Management
+     * Best Practice: Access token in memory, Refresh token in HttpOnly cookie
+     */
+    (function () {
+        if (window.authManager) return;
+
+        class AuthManager {
+            constructor() {
+                this.isRefreshing = false;
+                this.refreshPromise = null;
+                // Store access token in memory (NOT localStorage for security)
+                this._accessToken = null;
+                // Track if initial refresh has been attempted
+                this._initialRefreshDone = false;
+            }
+
+            getAccessToken() {
+                return this._accessToken;
+            }
+
+            setTokens(accessToken) {
+                // Store in memory only - NOT in localStorage or regular cookies
+                this._accessToken = accessToken;
+            }
+
+            clearTokens() {
+                this._accessToken = null;
+            }
+
+            async refreshToken() {
+                // If already refreshing, wait for existing promise
+                if (this.isRefreshing && this.refreshPromise) {
+                    return this.refreshPromise;
+                }
+
+                // If we already have a token, no need to refresh
+                if (this._accessToken) {
+                    return true;
+                }
+
+                this.isRefreshing = true;
+                this.refreshPromise = (async () => {
+                    try {
+                        console.log('[Auth] Calling /api/auth/refresh-token...');
+                        const response = await fetch('/api/auth/refresh-token', {
+                            method: 'POST',
+                            credentials: 'include' // Send HttpOnly cookie
+                        });
+
+                        console.log('[Auth] Response status:', response.status);
+                        if (!response.ok) {
+                            throw new Error('Refresh failed with status ' + response.status);
+                        }
+
+                        const data = await response.json();
+                        console.log('[Auth] Response data:', data.success, data.tokens?.accessToken ? 'has token' : 'no token');
+                        if (data.success && data.tokens?.accessToken) {
+                            this.setTokens(data.tokens.accessToken);
+                            console.log('[Auth] Token stored in memory');
+                            return true;
+                        }
+                        return false;
+                    } catch (e) {
+                        console.error('[Auth] Refresh failed:', e);
+                        return false;
+                    } finally {
+                        this.isRefreshing = false;
+                        this._initialRefreshDone = true;
+                        // Keep promise for a short time to handle rapid calls
+                        setTimeout(() => {
+                            this.refreshPromise = null;
+                        }, 100);
+                    }
+                })();
+
+                return this.refreshPromise;
+            }
+
+            async fetchWithAuth(url, options = {}, retried = false) {
+                let token = this.getAccessToken();
+
+                // If no token in memory, try silent refresh first
+                if (!token && !retried) {
+                    const refreshed = await this.refreshToken();
+                    if (refreshed) {
+                        token = this.getAccessToken();
+                    }
+                }
+
+                if (!token) {
+                    return fetch(url, options);
+                }
+
+                const headers = {
+                    ...options.headers,
+                    'Authorization': `Bearer ${token}`
+                };
+
+                const response = await fetch(url, { ...options, headers });
+
+                // Auto-refresh on 401 (only once)
+                if (response.status === 401 && !retried) {
+                    this._accessToken = null; // Clear invalid token
+                    const refreshed = await this.refreshToken();
+                    if (refreshed) {
+                        // Retry with new token
+                        return this.fetchWithAuth(url, options, true);
+                    }
+                }
+
+                return response;
+            }
+
+            async logout() {
+                try {
+                    await fetch('/api/auth/logout', {
+                        method: 'POST',
+                        credentials: 'include'
+                    });
+                } catch (e) {
+                    console.error('[Auth] Logout error:', e);
+                }
+                this.clearTokens();
+                window.location.href = '/login';
+            }
+
+            // Check if user might be logged in (has refresh token cookie)
+            async checkAuthState() {
+                if (this._accessToken) return true;
+                // Try silent refresh to get access token
+                return await this.refreshToken();
+            }
+
+            // Wait for initial refresh to complete (for pages that need token immediately)
+            async waitForInitialRefresh() {
+                if (this._initialRefreshDone) return this._accessToken !== null;
+                if (this.refreshPromise) return await this.refreshPromise;
+                return false;
+            }
+        }
+
+        window.authManager = new AuthManager();
+
+        // On page load, try silent refresh if user might be logged in
+        // This restores access token from refresh token cookie
+        window.authManager.refreshToken().catch(function () { });
+    })();
+</script>

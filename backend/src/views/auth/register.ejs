@@ -1,0 +1,188 @@
+<div class="min-h-[80vh] flex items-center justify-center gradient-bg py-12">
+    <div class="max-w-md w-full mx-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-8">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <div
+                    class="w-16 h-16 mx-auto bg-gradient-to-r from-purple-500 to-indigo-500 rounded-2xl flex items-center justify-center mb-4">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z">
+                        </path>
+                    </svg>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-900">Tạo tài khoản</h1>
+                <p class="text-gray-600 mt-2">Bắt đầu hành trình của bạn</p>
+            </div>
+
+            <!-- Error Message -->
+            <% if (typeof error !=='undefined' && error) { %>
+                <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <%= error %>
+                </div>
+                <% } %>
+
+                    <!-- Register Form -->
+                    <form id="registerForm" class="space-y-5">
+                        <div>
+                            <label for="username" class="block text-sm font-medium text-gray-700 mb-2">Tên đăng
+                                nhập</label>
+                            <input type="text" id="username" name="username" required minlength="3"
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                                placeholder="username">
+                        </div>
+
+                        <div>
+                            <label for="fullName" class="block text-sm font-medium text-gray-700 mb-2">Họ và tên</label>
+                            <input type="text" id="fullName" name="fullName"
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                                placeholder="Nguyễn Văn A">
+                        </div>
+
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                            <input type="email" id="email" name="email" required
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                                placeholder="email@example.com">
+                        </div>
+
+                        <div>
+                            <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Mật khẩu</label>
+                            <div class="relative">
+                                <input type="password" id="password" name="password" required minlength="8"
+                                    class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                                    placeholder="Tối thiểu 8 ký tự">
+                                <button type="button" id="togglePassword"
+                                    class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
+                                        </path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-2">Xác nhận
+                                mật khẩu</label>
+                            <input type="password" id="confirmPassword" name="confirmPassword" required
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                                placeholder="Nhập lại mật khẩu">
+                        </div>
+
+                        <div class="flex items-start">
+                            <input type="checkbox" id="terms" required
+                                class="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 mt-1">
+                            <label for="terms" class="ml-2 text-sm text-gray-600">
+                                Tôi đồng ý với <a href="#" class="text-purple-600 hover:text-purple-700">Điều khoản dịch
+                                    vụ</a> và <a href="#" class="text-purple-600 hover:text-purple-700">Chính sách bảo
+                                    mật</a>
+                            </label>
+                        </div>
+
+                        <button type="submit" id="submitBtn"
+                            class="w-full py-3 px-4 btn-gradient text-white font-medium rounded-lg transition-all flex items-center justify-center">
+                            <span id="btnText">Đăng ký</span>
+                            <svg id="btnSpinner" class="hidden w-5 h-5 ml-2 animate-spin" fill="none"
+                                viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                    stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                </path>
+                            </svg>
+                        </button>
+                    </form>
+
+                    <!-- Login Link -->
+                    <div class="mt-8 text-center">
+                        <p class="text-gray-600">
+                            Đã có tài khoản?
+                            <a href="/login" class="text-purple-600 hover:text-purple-700 font-medium">Đăng nhập</a>
+                        </p>
+                    </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Toggle password visibility
+    document.getElementById('togglePassword').addEventListener('click', function () {
+        const password = document.getElementById('password');
+        password.type = password.type === 'password' ? 'text' : 'password';
+    });
+
+    // Form submission
+    document.getElementById('registerForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+
+        if (password !== confirmPassword) {
+            alert('Mật khẩu xác nhận không khớp');
+            return;
+        }
+
+        const btn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+        const btnSpinner = document.getElementById('btnSpinner');
+
+        btn.disabled = true;
+        btnText.textContent = 'Đang đăng ký...';
+        btnSpinner.classList.remove('hidden');
+
+        try {
+            const response = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: document.getElementById('username').value,
+                    email: document.getElementById('email').value,
+                    password: password,
+                    fullName: document.getElementById('fullName').value
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // If server returns tokens, auto-login
+                if (data.tokens && window.authManager) {
+                    window.authManager.setTokens(data.tokens.accessToken, data.tokens.refreshToken);
+                    window.location.href = '/dashboard';
+                } else {
+                    alert('Đăng ký thành công! Vui lòng đăng nhập.');
+                    window.location.href = '/login';
+                }
+            } else {
+                // Chi tiết lỗi validation
+                let errorMsg = data.error || data.message || 'Đăng ký thất bại';
+
+                // Nếu là lỗi Zod validation, parse và hiển thị chi tiết
+                if (data.details && Array.isArray(data.details)) {
+                    errorMsg = data.details.map(d => `${d.path}: ${d.message}`).join('\n');
+                } else if (typeof data.error === 'object') {
+                    // Zod error object
+                    errorMsg = JSON.stringify(data.error, null, 2);
+                }
+
+                alert(errorMsg);
+            }
+        } catch (error) {
+            console.error('[Register] Error:', error);
+            alert('Có lỗi xảy ra. Vui lòng thử lại.');
+        } finally {
+            btn.disabled = false;
+            btnText.textContent = 'Đăng ký';
+            btnSpinner.classList.add('hidden');
+        }
+    });
+</script>

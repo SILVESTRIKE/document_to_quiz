@@ -1,0 +1,245 @@
+<div class="min-h-screen bg-gray-50 py-12">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Upload Tài Liệu</h1>
+            <p class="text-gray-600 mt-2">Tải lên file PDF hoặc DOCX để tạo bộ câu hỏi trắc nghiệm</p>
+        </div>
+
+        <!-- Upload Form -->
+        <div class="bg-white rounded-2xl shadow-lg p-8">
+            <form id="uploadForm" enctype="multipart/form-data">
+                <!-- Title Input -->
+                <div class="mb-6">
+                    <label for="title" class="block text-sm font-medium text-gray-700 mb-2">Tiêu đề Quiz</label>
+                    <input type="text" id="title" name="title" required
+                        class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                        placeholder="Nhập tiêu đề cho bộ câu hỏi">
+                </div>
+
+                <!-- Drag & Drop Zone -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Tài liệu</label>
+                    <div id="dropZone"
+                        class="border-2 border-dashed border-gray-300 rounded-xl p-12 text-center cursor-pointer hover:border-purple-500 hover:bg-purple-50 transition-all">
+                        <div id="uploadIcon" class="mx-auto">
+                            <svg class="w-16 h-16 mx-auto text-gray-400" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
+                                </path>
+                            </svg>
+                        </div>
+                        <p class="text-gray-600 mt-4" id="dropText">
+                            Kéo thả file vào đây hoặc <span class="text-purple-600 font-medium">nhấn để chọn</span>
+                        </p>
+                        <p class="text-sm text-gray-500 mt-2">Hỗ trợ PDF và DOCX (tối đa 50MB)</p>
+                        <input type="file" id="fileInput" name="file" accept=".pdf,.docx" class="hidden" required>
+                    </div>
+
+                    <!-- Selected File Info -->
+                    <div id="fileInfo"
+                        class="hidden mt-4 p-4 bg-purple-50 rounded-lg flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                                <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                    </path>
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p class="font-medium text-gray-900" id="fileName">document.pdf</p>
+                                <p class="text-sm text-gray-600" id="fileSize">2.4 MB</p>
+                            </div>
+                        </div>
+                        <button type="button" id="removeFile" class="text-red-600 hover:text-red-700">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" id="submitBtn"
+                    class="w-full py-4 px-6 btn-gradient text-white font-medium rounded-xl transition-all flex items-center justify-center text-lg">
+                    <span id="btnText">Tạo Quiz</span>
+                    <svg id="btnSpinner" class="hidden w-6 h-6 ml-2 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
+                        <path class="opacity-75" fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                        </path>
+                    </svg>
+                </button>
+            </form>
+        </div>
+
+        <!-- Tips -->
+        <div class="mt-8 bg-blue-50 rounded-xl p-6">
+            <h3 class="font-medium text-blue-900 flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Mẹo để có kết quả tốt nhất
+            </h3>
+            <ul class="mt-3 text-sm text-blue-800 space-y-2">
+                <li>• Tài liệu nên có định dạng câu hỏi rõ ràng (đánh số hoặc gạch đầu dòng)</li>
+                <li>• Đáp án đúng có thể được đánh dấu bằng màu đỏ hoặc highlight</li>
+                <li>• Mỗi câu hỏi nên có từ 2-5 lựa chọn đáp án</li>
+                <li>• Hệ thống sử dụng AI để nhận diện đáp án nếu không có đánh dấu rõ ràng</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const fileInfo = document.getElementById('fileInfo');
+    let selectedFile = null;
+
+    // Click to select file
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    // Drag and drop handlers
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('border-purple-500', 'bg-purple-50');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('border-purple-500', 'bg-purple-50');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('border-purple-500', 'bg-purple-50');
+
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFile(files[0]);
+        }
+    });
+
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length > 0) {
+            handleFile(fileInput.files[0]);
+        }
+    });
+
+    function handleFile(file) {
+        const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+
+        if (!allowedTypes.includes(file.type)) {
+            alert('Chỉ hỗ trợ file PDF và DOCX');
+            return;
+        }
+
+        if (file.size > 50 * 1024 * 1024) {
+            alert('File không được vượt quá 50MB');
+            return;
+        }
+
+        selectedFile = file;
+        document.getElementById('fileName').textContent = file.name;
+        document.getElementById('fileSize').textContent = formatFileSize(file.size);
+
+        dropZone.classList.add('hidden');
+        fileInfo.classList.remove('hidden');
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    document.getElementById('removeFile').addEventListener('click', () => {
+        selectedFile = null;
+        fileInput.value = '';
+        dropZone.classList.remove('hidden');
+        fileInfo.classList.add('hidden');
+    });
+
+    // Form submission
+    document.getElementById('uploadForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        if (!window.authManager || !window.authManager.getAccessToken()) {
+            window.location.href = '/login';
+            return;
+        }
+
+        if (!selectedFile) {
+            alert('Vui lòng chọn file');
+            return;
+        }
+
+        const btn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+        const btnSpinner = document.getElementById('btnSpinner');
+
+        btn.disabled = true;
+        btnText.textContent = 'Đang tải lên...';
+        btnSpinner.classList.remove('hidden');
+
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+        formData.append('title', document.getElementById('title').value);
+
+        try {
+            const token = window.authManager.getAccessToken();
+            const response = await fetch('/api/v1/quizzes/upload', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (response.status === 401) {
+                await window.authManager.silentRefresh();
+                // Retry with new token
+                const newToken = window.authManager.getAccessToken();
+                const retryResponse = await fetch('/api/v1/quizzes/upload', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${newToken}` },
+                    body: formData
+                });
+                const retryData = await retryResponse.json();
+                if (retryResponse.ok) {
+                    window.location.href = `/quiz/${retryData.quizId}/status`;
+                } else {
+                    alert(retryData.error || 'Upload thất bại');
+                }
+                return;
+            }
+
+            if (response.ok) {
+                // Check for duplicate redirect
+                if (data.isDuplicate) {
+                    alert(data.message);
+                    window.location.href = `/quiz/${data.existingQuizId}`;
+                    return;
+                }
+                window.location.href = `/quiz/${data.quizId}/status`;
+            } else {
+                alert(data.error || 'Upload thất bại');
+            }
+        } catch (error) {
+            console.error('Upload error:', error);
+            alert('Có lỗi xảy ra. Vui lòng thử lại.');
+        } finally {
+            btn.disabled = false;
+            btnText.textContent = 'Tạo Quiz';
+            btnSpinner.classList.add('hidden');
+        }
+    });
+</script>

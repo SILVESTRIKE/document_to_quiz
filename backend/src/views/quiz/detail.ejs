@@ -1,0 +1,182 @@
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Loading State -->
+        <div id="loadingState" class="text-center py-20">
+            <svg class="w-16 h-16 mx-auto text-purple-600 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                </path>
+            </svg>
+            <p class="text-gray-600 mt-4">Đang tải quiz...</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="errorState" class="hidden text-center py-20">
+            <svg class="w-16 h-16 mx-auto text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <h2 class="text-xl font-bold text-gray-900 mt-4">Không thể tải quiz</h2>
+            <p class="text-gray-600 mt-2" id="errorMessage">Quiz không tồn tại hoặc bạn không có quyền truy cập</p>
+            <a href="/dashboard" class="mt-6 inline-flex items-center px-4 py-2 btn-gradient text-white rounded-lg">
+                Quay lại Dashboard
+            </a>
+        </div>
+
+        <!-- Quiz Content -->
+        <div id="quizContent" class="hidden">
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <a href="/dashboard" class="text-purple-600 hover:text-purple-700 flex items-center mb-2">
+                        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
+                            </path>
+                        </svg>
+                        Quay lại
+                    </a>
+                    <h1 class="text-3xl font-bold text-gray-900" id="quizTitle">Quiz Title</h1>
+                    <p class="text-gray-600 mt-1" id="quizMeta">25 câu hỏi • Tạo ngày 22/12/2024</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button onclick="exportQuiz()"
+                        class="px-4 py-2 border border-purple-600 text-purple-600 rounded-lg hover:bg-purple-50 transition-colors flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        </svg>
+                        Xuất file
+                    </button>
+                </div>
+            </div>
+
+            <!-- Questions List -->
+            <div id="questionsList" class="space-y-6">
+                <!-- Questions will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const quizId = window.location.pathname.split('/').pop();
+
+    async function loadQuiz() {
+        try {
+            // Public API - no auth required
+            const response = await fetch(`/api/v1/quizzes/${quizId}`);
+
+            if (!response.ok) {
+                document.getElementById('loadingState').classList.add('hidden');
+                document.getElementById('errorState').classList.remove('hidden');
+                return;
+            }
+
+            const quiz = await response.json();
+
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('quizContent').classList.remove('hidden');
+
+            // Update header
+            document.getElementById('quizTitle').textContent = quiz.title || 'Untitled Quiz';
+            document.getElementById('quizMeta').textContent =
+                `${quiz.totalQuestions || 0} câu hỏi • Tạo ngày ${new Date(quiz.createdAt).toLocaleDateString('vi-VN')}`;
+
+            // Render questions
+            const questionsList = document.getElementById('questionsList');
+            questionsList.innerHTML = (quiz.questions || []).map((q, index) => `
+                <div class="bg-white rounded-xl shadow-lg p-6 card-hover" id="question-${q.id}">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex items-center">
+                            <span class="w-8 h-8 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center font-bold text-sm">
+                                ${index + 1}
+                            </span>
+                            <h3 class="ml-3 text-lg font-medium text-gray-900">${escapeHtml(q.stem)}</h3>
+                        </div>
+                        <span class="px-2 py-1 text-xs font-medium rounded-full ${q.correctAnswerKey ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}">
+                            ${q.correctAnswerKey ? 'Đã có đáp án' : 'Chưa có đáp án'}
+                        </span>
+                    </div>
+                    
+                    <div class="space-y-2 ml-11">
+                        ${(q.choices || []).map(choice => `
+                            <div class="flex items-center p-3 rounded-lg ${q.correctAnswerKey === choice.key ? 'bg-green-50 border border-green-200' : 'bg-gray-50'}">
+                                <span class="w-6 h-6 rounded-full ${q.correctAnswerKey === choice.key ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-600'} flex items-center justify-center text-sm font-medium mr-3">
+                                    ${choice.key}
+                                </span>
+                                <span class="${q.correctAnswerKey === choice.key ? 'text-green-700 font-medium' : 'text-gray-700'}">${escapeHtml(choice.text)}</span>
+                                ${q.correctAnswerKey === choice.key ? `
+                                    <svg class="w-5 h-5 text-green-500 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                ` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    ${q.explanation ? `
+                        <div class="mt-4 ml-11 p-3 bg-blue-50 rounded-lg">
+                            <p class="text-sm text-blue-800">
+                                <strong>Giải thích:</strong> ${escapeHtml(q.explanation)}
+                            </p>
+                        </div>
+                    ` : ''}
+                    
+                    <!-- Edit Answer Button -->
+                    <div class="mt-4 ml-11">
+                        <button onclick="showEditModal('${q.id}', '${q.correctAnswerKey || ''}')" class="text-purple-600 hover:text-purple-700 text-sm font-medium">
+                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                            </svg>
+                            Sửa đáp án
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+        } catch (error) {
+            console.error('Error loading quiz:', error);
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('errorState').classList.remove('hidden');
+        }
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function showEditModal(questionId, currentAnswer) {
+        const newAnswer = prompt('Nhập đáp án đúng (A, B, C, D...):', currentAnswer);
+        if (newAnswer && newAnswer !== currentAnswer) {
+            updateAnswer(questionId, newAnswer.toUpperCase());
+        }
+    }
+
+    async function updateAnswer(questionId, newAnswer) {
+        try {
+            const response = await window.authManager.fetchWithAuth(`/api/v1/quizzes/${quizId}/questions/${questionId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ correctAnswerKey: newAnswer })
+            });
+
+            if (response.ok) {
+                loadQuiz(); // Reload to show updated answer
+            } else {
+                alert('Không thể cập nhật đáp án');
+            }
+        } catch (error) {
+            alert('Có lỗi xảy ra');
+        }
+    }
+
+    function exportQuiz() {
+        // Download highlighted DOCX
+        window.location.href = `/api/v1/quizzes/${quizId}/download`;
+    }
+
+    loadQuiz();
+</script>
