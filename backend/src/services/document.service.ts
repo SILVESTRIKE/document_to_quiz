@@ -88,7 +88,8 @@ function parseQuestionBlock(block: string, section: string): SmartQuestion | nul
  */
 function parseHtmlQuestionBlock(htmlBlock: string, section: string): SmartQuestion | null {
     // Find start of choice A
-    const choiceAIndex = htmlBlock.search(/\sA\./);
+    // Handles whitespace, tag boundaries (>), and &nbsp;
+    const choiceAIndex = htmlBlock.search(/(?:^|\s|>|&nbsp;)\s*A\.\s+/i);
     if (choiceAIndex === -1) return null;
 
     // 1. Extract stem (remove HTML tags for clean text)
@@ -107,7 +108,8 @@ function parseHtmlQuestionBlock(htmlBlock: string, section: string): SmartQuesti
 
     // 2. Parse choices with visual mark detection
     const choicesPart = htmlBlock.substring(choiceAIndex);
-    const choiceRegex = /\s([A-D])\.\s+([\s\S]*?)(?=(?:\s[A-D]\.)|$)/g;
+    // Matches A. B. C. D. with boundary support
+    const choiceRegex = /(?:^|\s|>|&nbsp;)\s*([A-D])\.\s+([\s\S]*?)(?=(?:\s[A-D]\.\s+|>[A-D]\.\s+|&nbsp;[A-D]\.\s+|$))/gi;
     const matches = Array.from(choicesPart.matchAll(choiceRegex));
 
     const choices: ParsedChoice[] = matches.map(function (m) {
@@ -262,10 +264,11 @@ export const documentService = {
             const html = result.value;
 
             // Split into question blocks based on common patterns
-            const questionSplitRegex = /(?=<p>(?:\(CLO\s*\d+\.\d+\)|Câu\s*\d+[:.]|\d+[\.\)]))/gi;
+            // Allow tags like <strong> between <p> and the marker
+            const questionSplitRegex = /(?=(?:<p>|<div>|<br\s*\/?>)(?:<[^>]*>)*\s*(?:\(CLO\s*\d+\.\d+\)|Câu\s*\d+[:.]|\d+[\.\)]))/gi;
             const blocks = html.split(questionSplitRegex);
 
-            const results: SmartQuestion[] = [];
+            let results: SmartQuestion[] = [];
             let currentSection = "Nội dung chung";
 
             for (const block of blocks) {
@@ -286,7 +289,14 @@ export const documentService = {
                 if (parsed) results.push(parsed);
             }
 
-            logger.info(`[DocumentService] DOCX HTML: Extracted ${results.length} questions`);
+            // FALLBACK: If HTML parsing found 0 questions, use raw text extraction
+            if (results.length === 0) {
+                logger.warn(`[DocumentService] DOCX HTML extraction found 0 questions. Falling back to raw text.`);
+                const { value: rawText } = await mammoth.extractRawText({ path: filePath });
+                results = parseUniversalTextStickySection(rawText);
+            }
+
+            logger.info(`[DocumentService] DOCX: Extracted ${results.length} questions (HTML or Fallback)`);
 
             return {
                 title: "Tài liệu ôn thi tổng hợp",
