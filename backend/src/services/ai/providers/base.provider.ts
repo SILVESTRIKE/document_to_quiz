@@ -62,42 +62,98 @@ export abstract class BaseProvider implements AIProvider {
     }
 
     /**
-     * Parse JSON response from AI
+     * Parse JSON response from AI with robust repair
      */
     protected parseResponse(content: string, questions: QuestionInput[]): AIResponse[] {
         const results: AIResponse[] = [];
 
         try {
-            // Extract JSON from response (handle markdown code blocks)
-            let jsonStr = content;
-            const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+            // 1. Extract JSON from response (handle markdown code blocks)
+            let jsonStr = content.trim();
+            const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/i);
             if (jsonMatch) {
                 jsonStr = jsonMatch[1];
             }
 
-            // Clean and parse
-            jsonStr = jsonStr.replace(/[\r\n]/g, "").trim();
-            const parsed = JSON.parse(jsonStr);
+            // 2. Initial cleanup
+            jsonStr = jsonStr.trim();
 
-            for (const q of questions) {
-                const key = parsed[q.index.toString()] || parsed[q.index] || "A";
-                results.push({
-                    index: q.index,
-                    correctKey: key.toUpperCase(),
-                });
+            // 3. Try parsing immediately
+            let parsed: any;
+            try {
+                parsed = JSON.parse(jsonStr);
+            } catch (e) {
+                // 4. Try repairing if it's truncated or slightly malformed
+                logger.warn(`[${this.name}] Initial JSON parse failed, attempting repair...`);
+                const repairedJson = this.repairJson(jsonStr);
+                parsed = JSON.parse(repairedJson);
             }
+
+            // 5. Build responses
+            for (const q of questions) {
+                const indexStr = q.index.toString();
+                // Check multiple possible key formats from AI
+                const key = parsed[indexStr] || parsed[q.index] || null;
+
+                if (key) {
+                    results.push({
+                        index: q.index,
+                        correctKey: String(key).toUpperCase().substring(0, 1), // Take only first char (A/B/C/D)
+                    });
+                }
+            }
+
+            // If we got NO valid mappings, treat as parse failure
+            if (results.length === 0) {
+                throw new Error("No valid question-to-answer mappings found in JSON");
+            }
+
         } catch (error) {
-            logger.error(`[${this.name}] Failed to parse response:`, error);
-            // Return fallback for all questions
-            for (const q of questions) {
-                results.push({
-                    index: q.index,
-                    correctKey: "A", // Fallback
-                });
-            }
+            logger.error(`[${this.name}] Failed to parse response: ${error instanceof Error ? error.message : String(error)}`);
+            // Return empty array to trigger fallback in Orchestrator
+            return [];
         }
 
         return results;
+    }
+
+    /**
+     * Simple but effective JSON repair for truncated responses
+     */
+    private repairJson(json: string): string {
+        let repaired = json.trim();
+
+        // If it doesn't start with {, it's likely total garbage
+        if (!repaired.startsWith("{")) return "{}";
+
+        // Count braces and quotes
+        let openBraces = 0;
+        let inQuotes = false;
+        let escaped = false;
+
+        for (let i = 0; i < repaired.length; i++) {
+            const char = repaired[i];
+            if (char === '"' && !escaped) inQuotes = !inQuotes;
+            if (!inQuotes) {
+                if (char === "{") openBraces++;
+                if (char === "}") openBraces--;
+            }
+            escaped = char === "\\" && !escaped;
+        }
+
+        // 1. Close open quotes
+        if (inQuotes) repaired += '"';
+
+        // 2. Remove trailing commas if any (common in truncated objects)
+        repaired = repaired.replace(/,\s*$/, "");
+
+        // 3. Close open braces
+        while (openBraces > 0) {
+            repaired += "}";
+            openBraces--;
+        }
+
+        return repaired;
     }
 
     /**

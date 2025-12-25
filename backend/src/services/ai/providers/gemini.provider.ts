@@ -38,11 +38,11 @@ export class GeminiProvider extends BaseProvider {
         try {
             const genAI = new GoogleGenerativeAI(apiKey);
             const model = genAI.getGenerativeModel({
-                model: "gemini-flash-latest",
+                model: "gemini-1.5-flash", // Use explicit version
                 generationConfig: {
                     temperature: 0.1,
-                    maxOutputTokens: 2048,
-                    responseMimeType: "application/json", // Enable JSON mode
+                    maxOutputTokens: 4096, // Increased to prevent truncation for large batches
+                    responseMimeType: "application/json",
                 }
             });
 
