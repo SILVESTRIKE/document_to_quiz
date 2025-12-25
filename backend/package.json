@@ -35,7 +35,7 @@
         "node-cron": "^3.0.3",
         "nodemailer": "^7.0.9",
         "pdf-parse": "^1.1.1",
-        "pdfjs-dist": "3.11.174",
+        "pdfjs-dist": "5.4.449",
         "rate-limit-redis": "^4.2.2",
         "redis": "^5.8.3",
         "swagger-jsdoc": "^6.2.8",
