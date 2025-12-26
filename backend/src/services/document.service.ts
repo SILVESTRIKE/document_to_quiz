@@ -87,36 +87,36 @@ function parseQuestionBlock(block: string, section: string): SmartQuestion | nul
  * Parse HTML question block and detect visual marks (bold, underline, red text, highlight)
  */
 function parseHtmlQuestionBlock(htmlBlock: string, section: string): SmartQuestion | null {
-    // Find start of choice A
-    // Handles whitespace, tag boundaries (>), and &nbsp;
+    // 1. Tìm vị trí đáp án A (Linh hoạt với khoảng trắng và ký tự đặc biệt)
     const choiceAIndex = htmlBlock.search(/(?:^|\s|>|&nbsp;)\s*A\.\s+/i);
     if (choiceAIndex === -1) return null;
 
-    // 1. Extract stem (remove HTML tags for clean text)
+    // 2. Tách Stem và làm sạch (remove HTML tags for clean text)
     let stem = htmlBlock.substring(0, choiceAIndex)
         .replace(/<[^>]*>/g, " ")
         .replace(/\s+/g, " ")
         .trim();
 
-    // Clean stem: remove section markers and question numbers
+    // Làm sạch Stem: xóa các dấu hiệu nhận diện tiêu đề và số thứ tự
     stem = stem
         .replace(/^(?:Chương|Bài|Phần|Mục|CLO)\s*[\d\.]+/i, "")
         .replace(/^\(CLO\s*\d+\.\d+\)/i, "")
         .replace(/^Câu\s*\d+[:.]/i, "")
+        .replace(/^C\s*âu\s*\d+[:.]/i, "") // Khoảng trắng lạ
         .replace(/^\d+[\.\\)]/i, "")
         .trim();
 
-    // 2. Parse choices with visual mark detection
+    // 3. Tách các lựa chọn và kiểm tra "Dấu hiệu thị giác"
     const choicesPart = htmlBlock.substring(choiceAIndex);
-    // Matches A. B. C. D. with boundary support
     const choiceRegex = /(?:^|\s|>|&nbsp;)\s*([A-D])\.\s+([\s\S]*?)(?=(?:\s[A-D]\.\s+|>[A-D]\.\s+|&nbsp;[A-D]\.\s+|$))/gi;
     const matches = Array.from(choicesPart.matchAll(choiceRegex));
 
     const choices: ParsedChoice[] = matches.map(function (m) {
         const textWithTags = m[2];
 
-        // Check for visual marks: bold, underline, red text, yellow highlight
-        const isMarked = /<strong>|<b>|<u>|<span[^>]*style="[^"]*(?:color:\s*(?:red|#ff0000|rgb\(255,\s*0,\s*0\))|background-color:\s*yellow)/i.test(textWithTags);
+        // TỐI ƯU: Kiểm tra class 'marked' từ styleMap hoặc các thẻ nhấn mạnh mặc định
+        // Thêm kiểm tra dấu ✓ để hỗ trợ parse lại file đã giải
+        const isMarked = /class="marked"|<strong>|<b>|<u>|✓/i.test(textWithTags);
 
         return {
             key: m[1].toUpperCase(),
@@ -259,13 +259,24 @@ export const documentService = {
      */
     async parseDocx(filePath: string): Promise<ParsedDocument> {
         try {
-            // Use convertToHtml to preserve formatting (bold, color, highlight)
-            const result = await mammoth.convertToHtml({ path: filePath });
+            // Use convertToHtml with styleMap in options (second argument)
+            const result = await mammoth.convertToHtml(
+                { path: filePath },
+                {
+                    styleMap: [
+                        "r[style='color'] => span.marked",
+                        "r[style='background-color'] => span.marked",
+                        "u => span.marked",
+                        "strike => span.marked"
+                    ]
+                }
+            );
             const html = result.value;
 
-            // Split into question blocks based on common patterns
-            // Allow tags like <strong> between <p> and the marker
-            const questionSplitRegex = /(?=(?:<p>|<div>|<br\s*\/?>)(?:<[^>]*>)*\s*(?:\(CLO\s*\d+\.\d+\)|Câu\s*\d+[:.]|\d+[\.\)]))/gi;
+            // Tăng cường Regex tách câu:
+            // 1. Sau thẻ p/div/br
+            // 2. Hoặc xuất hiện cụm "Câu [số]" ở giữa dòng (có khoảng trắng phía trước)
+            const questionSplitRegex = /(?=(?:<p>|<div>|<br\s*\/?>)(?:<[^>]*>)*\s*(?:\(CLO\s*\d+\.\d+\)|C\s*âu\s*\d+[:.]|\d+[\.\)]))|(?<=\s)(?=(?:C\s*âu\s*\d+[:.]|\(\s*CLO))/gi;
             const blocks = html.split(questionSplitRegex);
 
             let results: SmartQuestion[] = [];
@@ -275,9 +286,9 @@ export const documentService = {
                 const cleanedBlock = block.trim();
                 if (cleanedBlock.length < 10) continue;
 
-                // Update Sticky Section from HTML content
-                const plainText = cleanedBlock.replace(/<[^>]*>/g, " ");
-                const sectionMatch = plainText.match(/(?:Chương|Bài|Phần|Mục|CLO)\s*[\d\.]+/i);
+                // Update Sticky Section from HTML content (Linh hoạt hơn)
+                const plainText = cleanedBlock.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ");
+                const sectionMatch = plainText.match(SECTION_REGEX);
                 if (sectionMatch) {
                     const rawSection = sectionMatch[0].toUpperCase();
                     const majorOnly = rawSection.match(/^([A-ZÀ-Ỹ]+\s*\d+)/i);
